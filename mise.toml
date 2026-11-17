@@ -1,0 +1,5 @@
+# Fork-owned (logto-friends). Upstream requires pnpm 9 or 10; a newer system pnpm
+# rejects the lockfile's overrides.
+[tools]
+node = "24"
+pnpm = "10"

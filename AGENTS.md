@@ -57,3 +57,15 @@ Never bypass commit hooks.
 Many packages in this project depend on each other through built artifacts. When checks fail because local package outputs are stale or missing, run `pnpm prepack` to rebuild them before retrying.
 
 If a hook cannot be fixed safely within the current task, stop and report the blocker with the failed command, relevant output, why it is out of scope, and what decision is needed.
+
+## This fork (logto-friends)
+
+A personal fork of Logto with small edits for my own use. This section is the only fork change to this file, so upstream merges stay clean. On this fork it overrides the Pull Requests, Changesets and Dev features sections above. Those apply only to PRs sent to upstream.
+
+- `friends` is the default branch and carries every fork commit. `master` mirrors `upstream/master` exactly; never commit to it. Work on `friends` directly, with no feature branches, and leave changes uncommitted unless asked to commit.
+- `friends` only merges upstream release tags (`vX.Y.Z`), never `upstream/master`. The full sync procedure, and the rules for fork migrations, are in `FRIENDS.md`.
+- No changesets and no `isDevFeaturesEnabled` guards for fork changes.
+- Keep fork changes in new files where possible, and keep edits to upstream files small.
+- Avoid changing Logto's schema. If a fork migration is unavoidable, follow `FRIENDS.md`: its timestamp is the newest existing migration's + 1, never the current time.
+- `mise.toml` pins Node 24 and pnpm 10 (a newer system pnpm rejects the lockfile). Run tools through `mise x -- <cmd>`.
+- Commit messages are checked by commitlint: conventional commits, and any scope must come from `commitlint.config.ts` (or leave the scope out).
