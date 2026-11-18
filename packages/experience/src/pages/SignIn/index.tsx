@@ -7,11 +7,8 @@ import LandingPageLayout from '@/Layout/LandingPageLayout';
 import SingleSignOnFormModeContextProvider from '@/Providers/SingleSignOnFormModeContextProvider';
 import SingleSignOnFormModeContext from '@/Providers/SingleSignOnFormModeContextProvider/SingleSignOnFormModeContext';
 import WebAuthnContextProvider from '@/Providers/WebAuthnContextProvider';
-import PasskeySignInButton from '@/components/Button/PasskeySignInButton';
-import Divider from '@/components/Divider';
 import GoogleOneTap from '@/components/GoogleOneTap';
 import TextLink from '@/components/TextLink';
-import SocialSignInList from '@/containers/SocialSignInList';
 import TermsAndPrivacyCheckbox from '@/containers/TermsAndPrivacyCheckbox';
 import TermsAndPrivacyLinks from '@/containers/TermsAndPrivacyLinks';
 import useNavigateWithPreservedSearchParams from '@/hooks/use-navigate-with-preserved-search-params';
@@ -21,6 +18,7 @@ import useTerms from '@/hooks/use-terms';
 import ErrorPage from '../ErrorPage';
 
 import Main from './Main';
+import TopMethods from './TopMethods';
 import styles from './index.module.scss';
 
 const SignInFooters = () => {
@@ -28,14 +26,8 @@ const SignInFooters = () => {
   const { termsValidation, agreeToTermsPolicy } = useTerms();
   const navigate = useNavigateWithPreservedSearchParams();
 
-  const {
-    signInMethods,
-    signUpMethods,
-    socialConnectors,
-    signInMode,
-    singleSignOnEnabled,
-    passkeySignIn,
-  } = useSieMethods();
+  const { signInMethods, signUpMethods, socialConnectors, signInMode, singleSignOnEnabled } =
+    useSieMethods();
 
   const { showSingleSignOnForm } = useContext(SingleSignOnFormModeContext);
 
@@ -87,16 +79,7 @@ const SignInFooters = () => {
           </div>
         )
       }
-      {
-        // Social sign-in methods
-        signInMethods.length > 0 && socialConnectors.length > 0 && (
-          <>
-            <Divider label="description.or" className={styles.divider} />
-            <SocialSignInList socialConnectors={socialConnectors} className={styles.main} />
-          </>
-        )
-      }
-      {passkeySignIn?.enabled && passkeySignIn.showPasskeyButton && <PasskeySignInButton />}
+      {/* Fork (logto-friends): social and passkey sign-in moved above the form, see `TopMethods` */}
     </>
   );
 };
@@ -128,6 +111,7 @@ const SignIn = () => {
       <GoogleOneTap context="signin" />
       <WebAuthnContextProvider>
         <SingleSignOnFormModeContextProvider>
+          <TopMethods />
           <Main signInMethods={signInMethods} socialConnectors={socialConnectors} />
           <SignInFooters />
         </SingleSignOnFormModeContextProvider>

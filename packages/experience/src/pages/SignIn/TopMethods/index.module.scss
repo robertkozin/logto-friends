@@ -1,0 +1,7 @@
+@use '@/shared/scss/underscore' as _;
+
+.passkey,
+.social,
+.divider {
+  margin-bottom: _.unit(4);
+}

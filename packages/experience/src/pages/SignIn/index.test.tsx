@@ -73,7 +73,11 @@ describe('<SignIn />', () => {
         });
 
         expect(container.querySelector('input[name="identifier"]')).not.toBeNull();
-        expect(container.querySelector('input[name="password"]')).toBeNull();
+        // Fork (logto-friends): an optional password field is shown when an identifier allows both
+        const hasPasswordAndCode = methods.some(
+          ({ password, verificationCode }) => password && verificationCode
+        );
+        expect(Boolean(container.querySelector('input[name="password"]'))).toBe(hasPasswordAndCode);
         expect(queryAllByAltText('description.terms_of_use')).not.toBeNull();
         expect(queryAllByAltText('description.privacy_policy')).not.toBeNull();
       }

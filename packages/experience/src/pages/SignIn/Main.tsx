@@ -1,9 +1,13 @@
 import { type SignIn, type ExperienceSocialConnector, AgreeToTermsPolicy } from '@logto/schemas';
 
 import IdentifierSignInForm from '@/components/IdentifierSignInForm';
+import PasswordOrCodeSignInForm, {
+  shouldUsePasswordOrCodeSignInForm,
+} from '@/components/PasswordOrCodeSignInForm';
 import PasswordSignInForm from '@/components/PasswordSignInForm';
 import SocialSignInList from '@/containers/SocialSignInList';
 import TermsAndPrivacyCheckbox from '@/containers/TermsAndPrivacyCheckbox';
+import { useSieMethods } from '@/hooks/use-sie';
 import useTerms from '@/hooks/use-terms';
 
 import useIdentifierSignInMethods from '../IdentifierSignIn/use-identifier-sign-in-methods';
@@ -18,6 +22,8 @@ type Props = {
 const Main = ({ signInMethods, socialConnectors }: Props) => {
   const { agreeToTermsPolicy } = useTerms();
   const { isPasswordOnly } = useIdentifierSignInMethods();
+  const { passkeySignIn } = useSieMethods();
+  const isIdentifierFirstPasskeySignIn = passkeySignIn?.enabled && !passkeySignIn.showPasskeyButton;
 
   if (signInMethods.length === 0 && socialConnectors.length > 0) {
     return (
@@ -43,6 +49,11 @@ const Main = ({ signInMethods, socialConnectors }: Props) => {
         signInMethods={signInMethods.map(({ identifier }) => identifier)}
       />
     );
+  }
+
+  // Fork (logto-friends): one step with an optional password; empty password sends a code
+  if (shouldUsePasswordOrCodeSignInForm(signInMethods) && !isIdentifierFirstPasskeySignIn) {
+    return <PasswordOrCodeSignInForm className={styles.main} signInMethods={signInMethods} />;
   }
 
   if (signInMethods.length > 0) {
