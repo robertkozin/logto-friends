@@ -92,7 +92,9 @@ export class SignInExperienceValidator {
 
   constructor(
     private readonly libraries: Libraries,
-    private readonly queries: Queries
+    private readonly queries: Queries,
+    /** Fork (logto-friends): whether the interaction carries a valid registration token. */
+    private readonly hasRegistrationToken?: () => Promise<boolean>
   ) {}
 
   /**
@@ -116,7 +118,9 @@ export class SignInExperienceValidator {
           signInMode !== SignInMode.SignIn ||
             // This guarantees new users can still be created through one-time token
             // authentication even if the registration is turned off.
-            hasVerifiedOneTimeToken,
+            hasVerifiedOneTimeToken ||
+            // Fork (logto-friends): a registration token opens registration for this interaction.
+            Boolean(await this.hasRegistrationToken?.()),
           new RequestError({ code: 'auth.forbidden', status: 403 })
         );
         break;
@@ -276,7 +280,8 @@ export class SignInExperienceValidator {
   public async isRegistrationDisabled(): Promise<boolean> {
     const { signInMode } = await this.getSignInExperienceData();
 
-    return signInMode === SignInMode.SignIn;
+    // Fork (logto-friends): a registration token opens registration for this interaction.
+    return signInMode === SignInMode.SignIn && !(await this.hasRegistrationToken?.());
   }
 
   public async getMandatoryUserProfileBySignUpMethods(): Promise<Set<MissingProfile>> {

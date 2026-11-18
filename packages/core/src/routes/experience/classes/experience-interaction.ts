@@ -33,6 +33,7 @@ import { conditional, trySafe } from '@silverhand/essentials';
 import { z } from 'zod';
 
 import RequestError from '#src/errors/RequestError/index.js';
+import { getRegistrationData } from '#src/friends/registration-token.js';
 import { buildUserPasswordPayload } from '#src/libraries/user.utils.js';
 import { type LogEntry } from '#src/middleware/koa-audit-log.js';
 import { getClientIdentifierPayload } from '#src/oidc/cimd/index.js';
@@ -270,7 +271,10 @@ export default class ExperienceInteraction {
   ) {
     const { libraries, queries } = tenant;
 
-    this.signInExperienceValidator = new SignInExperienceValidator(libraries, queries);
+    // Fork (logto-friends): pass the registration token check, see `src/friends/registration-token.ts`.
+    this.signInExperienceValidator = new SignInExperienceValidator(libraries, queries, async () =>
+      Boolean(await getRegistrationData(ctx, tenant.provider, queries))
+    );
     this.provisionLibrary = new ProvisionLibrary(tenant, ctx);
     this.userUpdateLibrary = new UserUpdateLibrary(tenant, ctx);
 

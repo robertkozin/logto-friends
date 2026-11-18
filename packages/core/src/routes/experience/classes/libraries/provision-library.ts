@@ -22,6 +22,10 @@ import { generateStandardId } from '@logto/shared';
 import { condArray, conditional, conditionalArray, trySafe } from '@silverhand/essentials';
 
 import { EnvSet } from '#src/env-set/index.js';
+import {
+  registrationDataCustomDataKey,
+  getRegistrationData,
+} from '#src/friends/registration-token.js';
 import { truncateMembershipDelta } from '#src/libraries/hook/utils.js';
 import { buildUserPasswordPayload } from '#src/libraries/user.utils.js';
 import { type JitOrganization } from '#src/queries/organization/email-domains.js';
@@ -465,10 +469,19 @@ export class ProvisionLibrary {
         }
       : undefined;
 
+    // Fork (logto-friends): store the claims of the registration token, if any.
+    const registrationData = await getRegistrationData(
+      this.ctx,
+      provider,
+      this.tenantContext.queries
+    );
+
     return {
       isCreatingFirstAdminUser,
       initialUserRoles,
-      customData,
+      customData: registrationData
+        ? { ...customData, [registrationDataCustomDataKey]: registrationData }
+        : customData,
     };
   }
 

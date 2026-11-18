@@ -278,7 +278,7 @@ export default class Tenant implements TenantContext {
     app.use(
       compose([
         koaExperienceSecurityHeaders(id, queries, mountedApps),
-        koaExperienceSsr(libraries, queries),
+        koaExperienceSsr(libraries, queries, provider),
         koaSpaSessionGuard(provider, queries),
         mount(
           `/${experience.routes.consent}`,

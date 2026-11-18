@@ -24,6 +24,7 @@ import snakecaseKeys from 'snakecase-keys';
 
 import { EnvSet } from '#src/env-set/index.js';
 import { addOidcEventListeners } from '#src/event-listeners/index.js';
+import { registrationTokenParam } from '#src/friends/registration-token.js';
 import { type LogtoConfigLibrary } from '#src/libraries/logto-config.js';
 import koaAppSecretTranspilation from '#src/middleware/koa-app-secret-transpilation.js';
 import koaAuditLog, { type WithLogContext } from '#src/middleware/koa-audit-log.js';
@@ -420,7 +421,8 @@ export default function initOidc(
         return grant;
       }
     },
-    extraParams: Object.values(ExtraParamsKey),
+    // Fork (logto-friends): accept the registration token parameter, see `src/friends/registration-token.ts`.
+    extraParams: [...Object.values(ExtraParamsKey), registrationTokenParam],
     extraTokenClaims: async (ctx, token) => {
       const authenticationContextClaims = getExtraTokenClaimsForAuthenticationContext(ctx, token);
       const [tokenExchangeClaims, organizationApiResourceClaims, jwtCustomizedClaims] =

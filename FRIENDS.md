@@ -10,6 +10,40 @@ A personal fork of [Logto](https://github.com/logto-io/logto) with small edits f
 
 Remotes: `origin` is this fork, and `upstream` is `logto-io/logto` (push disabled).
 
+## Fork changes
+
+### Token-gated registration
+
+Code: `packages/core/src/friends/registration-token.ts`; every upstream file it touches has a `Fork (logto-friends)` comment.
+
+Set the sign-in experience to **sign-in only** and configure the sign-up methods you want to allow. Registration then stays closed, except within a sign-in flow that carries a valid registration token. In that flow, Logto reports registration as on to the sign-in page, so the stock registration screens work, including social sign-up.
+
+**Who can issue tokens.** Any application with an unexpired client secret (traditional web apps, machine-to-machine apps) signs tokens with its own secret. There's nothing else to configure or share. Logto doesn't check anything beyond the signature: limiting who may register (invites, quotas, single use) is the issuing app's job.
+
+**Flow.**
+
+1. The app decides someone may register and mints a token.
+2. It starts a normal sign-in with its own `client_id`, adding `first_screen=register&registration_token=<token>` (with a Logto SDK: `signIn({ firstScreen: 'register', extraParams: { registration_token } })`).
+3. The person registers. Logto sends them back to the app's redirect URI as usual.
+4. The new user has `customData.registrationData` set to the token's claims, minus the JWT registered ones. The app can read it in its callback (`custom_data` scope, from userinfo), on any later sign-in, or from a `PostRegister` / `User.Created` webhook.
+
+**Token.** A JWT signed with HS256 using one of the app's unexpired client secrets, so secret rotation works:
+
+| Claim | Value |
+| --- | --- |
+| `iss` | Required. The issuing app's client ID. Must equal the `client_id` of the sign-in request. |
+| `aud` | Required. `logto-friends-registration` |
+| `iat`, `exp` | Required. Logto rejects tokens older than 1 hour whatever `exp` says; 30 minutes is plenty. |
+| anything else | Copied to `customData.registrationData`, e.g. `{ "inviteId": "..." }`. `sub`, `nbf` and `jti` are dropped along with the claims above. |
+
+An invalid token doesn't produce an error page: the flow just stays sign-in only. The reason is logged as `[friends] registration token rejected: ...` in the server logs.
+
+Limits:
+
+- A token can be used more than once while it's valid: every account registered with it gets the same `registrationData`. Keep lifetimes short, and if single use matters, enforce it in the issuing app.
+- The token appears in the authorization URL, like Logto's own one-time-token links, so it can show up in access logs. It's short-lived.
+- Only the current experience API is covered. The legacy `/api/interaction` routes stay sign-in only.
+
 ## Bringing in upstream
 
 Run these steps on a schedule (checking once a week is plenty; Logto releases every few weeks), or by hand. Each step says when to stop. When run unattended, stop at any STOP and report back. Don't push or deploy past one.

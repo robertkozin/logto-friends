@@ -2,6 +2,7 @@ import { adminTenantId, fullSignInExperienceGuard } from '@logto/schemas';
 import { z } from 'zod';
 
 import { EnvSet, getTenantEndpoint } from '#src/env-set/index.js';
+import { applyRegistrationToken } from '#src/friends/registration-token.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 import type TenantContext from '#src/tenants/TenantContext.js';
 import { getExperienceLanguage } from '#src/utils/i18n.js';
@@ -13,7 +14,7 @@ import experienceRoutes from './well-known.experience.js';
 
 export default function wellKnownRoutes<T extends AnonymousRouter>(
   router: T,
-  { libraries, queries, id: tenantId }: TenantContext
+  { libraries, queries, provider, id: tenantId }: TenantContext
 ) {
   const { accountCenter: accountCenterApiGuard } = getAccountCenterApiGuards();
   const {
@@ -53,7 +54,13 @@ export default function wellKnownRoutes<T extends AnonymousRouter>(
     }),
     async (ctx, next) => {
       const { organizationId, appId } = ctx.guard.query;
-      ctx.body = await getFullSignInExperience({ locale: ctx.locale, organizationId, appId });
+      // Fork (logto-friends): open registration for interactions with a registration token.
+      ctx.body = await applyRegistrationToken(
+        await getFullSignInExperience({ locale: ctx.locale, organizationId, appId }),
+        ctx,
+        provider,
+        queries
+      );
 
       return next();
     }
@@ -84,7 +91,7 @@ export default function wellKnownRoutes<T extends AnonymousRouter>(
     }
   );
 
-  experienceRoutes(router, libraries);
+  experienceRoutes(router, libraries, provider, queries);
 
   router.get(
     '/.well-known/account-center',

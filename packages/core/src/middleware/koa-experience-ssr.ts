@@ -1,7 +1,9 @@
 import { type SsrData, logtoCookieKey, logtoUiCookieGuard, ssrPlaceholder } from '@logto/schemas';
 import { pick, trySafe } from '@silverhand/essentials';
 import type { MiddlewareType } from 'koa';
+import type { Provider } from 'oidc-provider';
 
+import { applyRegistrationToken } from '#src/friends/registration-token.js';
 import { readOptionalTheme } from '#src/oidc/utils.js';
 import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';
@@ -40,7 +42,9 @@ const serializeSsrData = (data: SsrData): string =>
  */
 export default function koaExperienceSsr<StateT, ContextT extends WithI18nContext>(
   libraries: Libraries,
-  queries: Queries
+  queries: Queries,
+  /** Fork (logto-friends): used to open registration for interactions with a registration token. */
+  provider?: Provider
 ): MiddlewareType<StateT, ContextT> {
   return async (ctx, next) => {
     await next();
@@ -57,13 +61,17 @@ export default function koaExperienceSsr<StateT, ContextT extends WithI18nContex
         logtoUiCookieGuard.parse(JSON.parse(ctx.cookies.get(logtoCookieKey) ?? '{}'))
       ) ?? {};
 
-    const [signInExperience, customLanguages] = await Promise.all([
+    const [fullSignInExperience, customLanguages] = await Promise.all([
       libraries.signInExperiences.getFullSignInExperience({
         locale: ctx.locale,
         ...logtoUiCookie,
       }),
       queries.customPhrases.findAllCustomLanguageTags(),
     ]);
+    // Fork (logto-friends): open registration for interactions with a registration token.
+    const signInExperience = provider
+      ? await applyRegistrationToken(fullSignInExperience, ctx, provider, queries)
+      : fullSignInExperience;
     const language = getExperienceLanguage({
       ctx,
       languageInfo: signInExperience.languageInfo,
